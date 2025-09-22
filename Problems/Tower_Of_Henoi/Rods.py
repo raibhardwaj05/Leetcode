@@ -1,26 +1,41 @@
 from turtle import Turtle
 
-class Rod(Turtle):
+Align = "center"
+Font = ("Arial", 10, "bold")
+
+class Rod():
     def __init__(self):
-        super().__init__()
-        self.shape("square")
-        self.hideturtle()
-        self.penup()
-        self.pensize(10)
-        self.color("white")
-        self.x_cord = -250
+        self.rod = []
+        self.x_cord = [-250, 0, 250]
         self.y_cord = -200
-        self.move = 0
 
     def create(self):
-        for i in range(1, 4):
-            self.goto(self.x_cord + self.move, self.y_cord)
-            self.pendown()
-            self.goto(self.xcor(), self.ycor() + 350)
-            self.penup()
-            self.move += 250
+        for i, x in enumerate(self.x_cord):
+            t = Turtle("square")
+            t.color("white")
+            t.shapesize(stretch_len= 0.5, stretch_wid= 15)
+            t.penup()
+            t.goto(x, self.y_cord + 150)
+            self.rod.append(t)
 
-        self.goto(-300, -200)
-        self.pendown()
-        self.goto(300, -200)
+        baseline = Turtle("square")
+        baseline.color("white")
+        baseline.hideturtle()
+        baseline.pensize(10)
+        baseline.penup()
+        baseline.goto(-350, -200)
+        baseline.pendown()
+        baseline.goto(350, -200)
+
+    def label(self):
+        label = Turtle()
+        label.hideturtle()
+        label.penup()
+        label.color("white")
+        label.goto(self.x_cord[0], self.y_cord - 30)
+        label.write("Source", align=Align, font=Font)
+        label.goto(self.x_cord[1], self.y_cord - 30)
+        label.write("Helper", align=Align, font=Font)
+        label.goto(self.x_cord[2], self.y_cord - 30)
+        label.write("Destination", align=Align, font=Font)
       
