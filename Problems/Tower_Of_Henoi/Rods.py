@@ -3,7 +3,7 @@ from turtle import Turtle
 Align = "center"
 Font = ("Arial", 10, "bold")
 
-class Rod():
+class Rod:
     def __init__(self):
         self.rod = []
         self.x_cord = [-250, 0, 250]
