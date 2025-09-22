@@ -48,7 +48,7 @@ def move_turtle(discs, x_target, y_target):
         current_y += travel_y
         discs.goto(current_x, current_y)
         s.update()
-        time.sleep(0.05)
+        time.sleep(0.1)
 
 def move(num_discs, source, helper, destination):
     if num_discs == 0:
