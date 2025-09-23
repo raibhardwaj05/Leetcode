@@ -4,7 +4,6 @@ from Disk import Disc
 from Rods import Rod
 from Autoplay import Autoplay
 from Status import Status
-import time
 
 # --- Screen Setup ---
 s = Screen()
@@ -79,33 +78,6 @@ def hint():
     reset_game()
     autoplay.move(len(disc_list), rods["src"], rods["hlp"], rods["dest"])
 
-# --- Move turtle animation ---
-def move_turtle(disc, x_target, y_target):
-    current_x, current_y = disc.position()
-    steps = 20
-    lift_above = 150
-
-    travel_y = (lift_above - current_y)/steps
-    for _ in range(steps):
-        current_y += travel_y
-        disc.goto(current_x, current_y)
-        s.update()
-        time.sleep(0.02)
-
-    travel_x = (x_target - current_x)/steps
-    for _ in range(steps):
-        current_x += travel_x
-        disc.goto(current_x, current_y)
-        s.update()
-        time.sleep(0.02)
-
-    travel_y = (y_target - current_y)/steps
-    for _ in range(steps):
-        current_y += travel_y
-        disc.goto(current_x, current_y)
-        s.update()
-        time.sleep(0.02)
-
 # --- Helper to get disc size ---
 def get_disk_size(disk):
     return disk.shapesize()[1]
@@ -115,7 +87,7 @@ def get_disk_size(disk):
 selected_rod = None
 
 def handle_click(x, y):
-    global selected_rod, disc_list
+    global selected_rod, disc_list, rods
 
     clicked_rod = None
     for rod, xpos in rod_positions.items():
@@ -138,20 +110,21 @@ def handle_click(x, y):
             disc_to_move = src.pop()
             rod_x_coord = rod_positions[clicked_rod]
             rod_y_coord = -185 + len(dest) * disc_height
-            move_turtle(disc_to_move, rod_x_coord, rod_y_coord)
+            autoplay.move_turtle(disc_to_move, rod_x_coord, rod_y_coord)
             dest.append(disc_to_move)
             status.decrease()
 
-            if status.remaining <= 0 and len(dest) != len(disc_list):
+            if status.remaining <= 0 and len(rods["dest"]) != len(disc_list):
                 reset_game()
 
-            elif status.remaining <= 0 and len(dest) == len(disc_list):
+            elif status.remaining <= 0 and len(rods["dest"]) == len(disc_list):
                 t = Turtle()
                 t.color("orange")
                 t.penup()
                 t.hideturtle()
                 t.goto(0, 230)
                 t.write("You Win\nMove to Next Level", align="center", font=("Arial", 15, "bold"))
+
 
     selected_rod = None
 
