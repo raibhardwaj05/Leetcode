@@ -5,11 +5,13 @@ Font = ("Arial", 10, "bold")
 
 class Rod:
     def __init__(self):
-        self.rod = []
-        self.x_cord = [-250, 0, 250]
-        self.y_cord = -200
+        self.rod = [] # list that will store the rods
+        self.x_cord = [-350, 0, 350] # x coordinates of the rods
+        self.y_cord = -200 # y coordinates of the rods
 
+    # create Rods
     def create(self):
+        # create rods for all coordinates in the x_cord list
         for i, x in enumerate(self.x_cord):
             t = Turtle("square")
             t.color("white")
@@ -23,9 +25,9 @@ class Rod:
         baseline.hideturtle()
         baseline.pensize(10)
         baseline.penup()
-        baseline.goto(-350, -200)
+        baseline.goto(-450, -200)
         baseline.pendown()
-        baseline.goto(350, -200)
+        baseline.goto(450, -200)
 
     def label(self):
         label = Turtle()
@@ -38,4 +40,3 @@ class Rod:
         label.write("Helper", align=Align, font=Font)
         label.goto(self.x_cord[2], self.y_cord - 30)
         label.write("Destination", align=Align, font=Font)
-      
