@@ -13,8 +13,15 @@ class Status:
         self.steps.color("green")
         self.steps.hideturtle()
         self.steps.penup()
-        self.steps.goto(-450, 260)
+        self.steps.goto(-430, 260)
         self.update_status()
+
+        self.hint = Turtle()
+        self.hint.color("green")
+        self.hint.hideturtle()
+        self.hint.penup()
+        self.hint.goto(430, 260)
+        self.hint.write("Hint: H", align= Align, font= Font2)
 
     def update_status(self):
         self.steps.clear()
