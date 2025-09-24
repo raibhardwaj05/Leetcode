@@ -29,7 +29,9 @@ rods = {"src": [], "hlp": [], "dest": []}
 num_disc = disc.discs
 disc_list = disc.disc_list
 
-# Place discs on src rod
+level = num_disc - 1
+
+# Place initial discs on src rod
 for i, d in enumerate(disc_list):
     rods["src"].append(d)
     d.og_color = d.fillcolor()
@@ -43,6 +45,12 @@ selected_disc: dict[str, any] = {"disc": None, "from_rod": None}
 
 # --- Autoplay ---
 autoplay = Autoplay(len(disc_list), s, rods, rod_positions, status)
+
+# --- Global Message Turtle ---
+t = Turtle()
+t.penup()
+t.hideturtle()
+t.goto(0, 230)
 
 # --- Reset game ---
 def reset_game():
@@ -61,27 +69,71 @@ def reset_game():
         d.goto(x, y)
         d.fillcolor(d.og_color)
 
-    t = Turtle()
+    t.clear()
     t.color("red")
-    t.penup()
-    t.hideturtle()
-    t.goto(0, 250)
     t.write("You Lose: Solution", align="center", font=("Arial", 15, "bold"))
 
     status.remaining = status.total_step
     autoplay.move(len(disc_list), rods["src"], rods["hlp"], rods["dest"])
 
     s.update()
+    s.listen()
+    s.onkey(key="h", fun=hint)
 
 # --- Onkey Hint ---
 def hint():
     reset_game()
-    autoplay.move(len(disc_list), rods["src"], rods["hlp"], rods["dest"])
+
+# --- Next Level ---
+def next_level():
+    global level, num_disc, disc, disc_list, rods, autoplay
+
+    level += 1
+    num_disc += 1
+
+    # Hide old discs
+    for d in disc_list:
+        d.hideturtle()
+
+    # Clear rods without replacing the dict
+    for rod_stack in rods.values():
+        rod_stack.clear()
+
+    # Recreate discs
+    disc = Disc(R, s)
+    disc.discs = num_disc
+    disc.create_disc()
+    disc_list = disc.disc_list
+
+    # Place discs on source rod
+    for i, d in enumerate(disc_list):
+        rods["src"].append(d)
+        x = rod_positions["src"]
+        y = -185 + i * disc_height
+        d.goto(x, y)
+        d.og_color = d.fillcolor()
+        d.showturtle()
+
+    # Update status
+    status.num_disc = num_disc
+    status.total_step = (2 ** num_disc) - 1
+    status.remaining = status.total_step
+
+    # --- Autoplay ---
+    autoplay = Autoplay(len(disc_list), s, rods, rod_positions, status)
+
+    # Show level text
+    t.clear()
+    t.color("yellow")
+    t.write(f"Level: {level}", align="center", font=("Arial", 15, "bold"))
+
+    s.update()
+    s.listen()
+    s.onkey(key="h", fun=hint)
 
 # --- Helper to get disc size ---
 def get_disk_size(disk):
     return disk.shapesize()[1]
-
 
 # --- Manual rod-based click listener ---
 selected_rod = None
@@ -118,20 +170,16 @@ def handle_click(x, y):
                 reset_game()
 
             elif status.remaining <= 0 and len(rods["dest"]) == len(disc_list):
-                t = Turtle()
-                t.color("orange")
-                t.penup()
-                t.hideturtle()
-                t.goto(0, 230)
+                t.clear()
+                t.color("yellow")
                 t.write("You Win\nMove to Next Level", align="center", font=("Arial", 15, "bold"))
-
+                s.ontimer(next_level, 2000)  # Automatically go to next level
 
     selected_rod = None
 
+# --- Bind keys and clicks ---
 s.listen()
-s.onkey(key= "h", fun = hint)
-
-# --- Bind the new click listener ---
+s.onkey(key="h", fun=hint)
 s.onscreenclick(handle_click)
 s.update()
 s.mainloop()
