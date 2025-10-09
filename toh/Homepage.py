@@ -1,0 +1,116 @@
+from tkinter import *
+from tkinter import ttk, messagebox
+import mysql.connector
+import threading
+import Tower_Of_Hanoi  # This file contains your turtle game
+
+# ---------------- Database ----------------
+conn = mysql.connector.connect(
+    host="127.0.0.1",
+    user="root",
+    password="Tanay@Rai1",
+    database="TowerOfHanoi"
+)
+cursor = conn.cursor()
+
+# ---------------- Tkinter ----------------
+r = Tk()
+r.title("Tower Of Hanoi")
+r.geometry("1000x600")
+r.configure(bg="royalblue")
+
+# Leaderboard
+leaderboard = Frame(r, bg="darkblue", borderwidth=5)
+leaderboard.pack(side="right", fill="both", padx=30, pady=50)
+Label(leaderboard, text="Leaderboard", font="Arial 25 bold", bg="silver").pack(fill=X, pady=10)
+
+columns = ("Rank", "Player Name", "Score")
+tree = ttk.Treeview(leaderboard, columns=columns, show="headings", height=15)
+for col in columns:
+    tree.heading(col, text=col)
+    tree.column(col, width=100, anchor="center")
+tree.pack(fill="both", expand=True, pady=10)
+
+style = ttk.Style()
+style.theme_use("clam")
+style.configure("Treeview", background="darkblue", foreground="white", rowheight=25, fieldbackground="darkblue")
+style.configure("Treeview.Heading", background="silver", foreground="black", font=("Arial", 12, "bold"))
+style.map("Treeview", background=[("selected", "gold")], foreground=[("selected", "black")])
+
+# Main Frame
+window = Frame(r, bg="darkblue", borderwidth=5)
+window.pack(side="left", fill="both", expand=True, padx=30, pady=50)
+Label(window, text="HOME", font=("Arial 15 bold"), bg="cyan").pack(pady=2)
+
+# Player type
+player = StringVar()
+player.set("new")
+playertype = Frame(window, bg="darkblue")
+playertype.pack(pady=20)
+Radiobutton(playertype, text="New Player", bg="silver", fg="black", variable=player, value="new",
+            indicatoron=0, width=15, selectcolor="gold", font=("Arial", 14, "bold")).grid(row=0, column=0, padx=20)
+Radiobutton(playertype, text="Existing Player", bg="silver", fg="black", variable=player, value="exist",
+            indicatoron=0, width=15, selectcolor="gold", font=("Arial", 14, "bold")).grid(row=0, column=1, padx=20)
+
+# Name Entry
+name_frame = Frame(window, bg="darkblue")
+name_frame.pack(pady=20)
+Label(name_frame, text="Enter Name:", bg="darkblue", fg="white", font=("Arial", 13, "bold")).grid(row=0, column=0, padx=5)
+entry = Entry(name_frame, width=30, font=("Arial", 14))
+entry.grid(row=0, column=1, padx=5)
+
+# ---------------- Functions ----------------
+def update_leaderboard(highlight_name=None):
+    for row in tree.get_children():
+        tree.delete(row)
+    cursor.execute("SELECT PlayerName, Score FROM leaderboard ORDER BY Score DESC")
+    results = cursor.fetchall()
+    for rank, (pname, score) in enumerate(results, start=1):
+        tree.insert("", "end", values=(rank, pname, score))
+    if highlight_name:
+        for item in tree.get_children():
+            if tree.item(item, "values")[1] == highlight_name:
+                tree.selection_set(item)
+                tree.see(item)
+                break
+
+def start_game_func():
+    pname = entry.get().strip()
+    if not pname:
+        messagebox.showwarning("Input Error", "Please enter a name.")
+        return
+
+    if player.get() == "new":
+        cursor.execute("SELECT PlayerName FROM leaderboard WHERE PlayerName=%s", (pname,))
+        if cursor.fetchone():
+            messagebox.showinfo("Duplicate Entry", "Player already exists. Select existing player.")
+            return
+        cursor.execute("INSERT INTO leaderboard (PlayerName, Score) VALUES (%s, %s)", (pname, 0))
+        conn.commit()
+        update_leaderboard(highlight_name=pname)
+        messagebox.showinfo("Success", f"New player '{pname}' added. Select existing to play.")
+
+    elif player.get() == "exist":
+        cursor.execute("SELECT Score FROM leaderboard WHERE PlayerName=%s", (pname,))
+        result = cursor.fetchone()
+        if result:
+            update_leaderboard(highlight_name=pname)
+            entry.delete(0, END)
+            score = result[0]
+
+            def run_game_and_refresh():
+                Tower_Of_Hanoi.start_game(pname, score)
+                # Refresh leaderboard after game ends
+                update_leaderboard(highlight_name=pname)
+
+            threading.Thread(target=run_game_and_refresh).start()
+        else:
+            messagebox.showerror("No Results", f"No player named '{pname}' found.")
+
+# Buttons
+Button(window, text="Start Game", font=("Arial", 14, "bold"), bg="gold", fg="darkblue", command=start_game_func).pack(pady=15)
+Button(window, text="Quit Game", font=("Arial", 14, "bold"), bg="gold", fg="darkblue", command=r.destroy).pack(pady=10)
+
+# Initial leaderboard
+update_leaderboard()
+r.mainloop()
