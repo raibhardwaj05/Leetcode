@@ -80,7 +80,10 @@ def start_game(player_name, score):
 
     # --- Next Level ---
     def next_level():
-        nonlocal disc_list
+        nonlocal level, num_disc, disc, disc_list, rods, autoplay
+
+        level += 1
+        num_disc += 1
 
         # Hide old discs
         for d in disc_list:
@@ -128,6 +131,24 @@ def start_game(player_name, score):
 
     selected_rod = None
 
+    # --- Database Update ---
+    def update_score_in_db(pname):
+        try:
+            conn = mysql.connector.connect(
+                host="127.0.0.1",
+                user="root",
+                password="tanviraut13",
+                database="towerOfHANOI"
+            )
+            cursor = conn.cursor()
+            cursor.execute("UPDATE leaderboard SET Score = Score + 1 WHERE PlayerName = %s", (pname,))
+            conn.commit()
+            cursor.close()
+            conn.close()
+            print(f"✅ Score updated for {pname}")
+        except Exception as e:
+            print(f"❌ Error updating score: {e}")
+
     def handle_click(x, y):
         nonlocal selected_rod
         clicked_rod = None
@@ -164,23 +185,6 @@ def start_game(player_name, score):
                         reset_game()
         selected_rod = None
 
-    # --- Database Update ---
-    def update_score_in_db(pname):
-        try:
-            conn = mysql.connector.connect(
-                host="127.0.0.1",
-                user="root",
-                password="tanviraut13",
-                database="towerOfHANOI"
-            )
-            cursor = conn.cursor()
-            cursor.execute("UPDATE leaderboard SET Score = Score + 1 WHERE PlayerName = %s", (pname,score))
-            conn.commit()
-            cursor.close()
-            conn.close()
-            print(f"✅ Score updated for {pname}")
-        except Exception as e:
-            print(f"❌ Error updating score: {e}")
 
     # --- Bind keys and clicks ---
     s.listen()
