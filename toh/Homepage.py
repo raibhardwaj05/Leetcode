@@ -8,8 +8,8 @@ import Tower_Of_Hanoi  # This file contains your turtle game
 conn = mysql.connector.connect(
     host="127.0.0.1",
     user="root",
-    password="Tanay@Rai1",
-    database="TowerOfHanoi"
+    password="tanviraut13",
+    database="towerOfHANOI"
 )
 cursor = conn.cursor()
 
@@ -24,7 +24,7 @@ leaderboard = Frame(r, bg="darkblue", borderwidth=5)
 leaderboard.pack(side="right", fill="both", padx=30, pady=50)
 Label(leaderboard, text="Leaderboard", font="Arial 25 bold", bg="silver").pack(fill=X, pady=10)
 
-columns = ("Rank", "Player Name", "Score")
+columns = ("Rank", "Name", "Score")
 tree = ttk.Treeview(leaderboard, columns=columns, show="headings", height=15)
 for col in columns:
     tree.heading(col, text=col)
