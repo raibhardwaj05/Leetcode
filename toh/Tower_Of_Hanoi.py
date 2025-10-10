@@ -72,24 +72,56 @@ def start_game(player_name, score):
         t.color("red")
         t.write("You Lose: Solution", align="center", font=("Arial", 15, "bold"))
         status.remaining = status.total_step
-        s.update()
-
-    def reset_game():
-        for rod_stack in rods.values():
-            rod_stack.clear()
-        for i, d in enumerate(disc_list):
-            rods["src"].append(d)
-            d.goto(rod_positions["src"], -185 + i * disc_height)
-            d.fillcolor(d.og_color)
-        t.clear()
-        t.color("red")
-        t.write("You Lose: Solution", align="center", font=("Arial", 15, "bold"))
-        status.remaining = status.total_step
         autoplay.move(len(disc_list), rods["src"], rods["hlp"], rods["dest"])
         s.update()
 
     def hint():
         reset_game()
+
+    # --- Next Level ---
+    def next_level():
+        nonlocal disc_list
+
+        # Hide old discs
+        for d in disc_list:
+            d.hideturtle()
+
+        # Clear rods without replacing the dict
+        for rod_stack in rods.values():
+            rod_stack.clear()
+
+        # Recreate discs
+        disc = Disc(R, s)
+        disc.discs = num_disc
+        disc.create_disc()
+        disc_list = disc.disc_list
+
+        # Place discs on source rod
+        for i, d in enumerate(disc_list):
+            rods["src"].append(d)
+            x = rod_positions["src"]
+            y = -185 + i * disc_height
+            d.goto(x, y)
+            d.og_color = d.fillcolor()
+            d.showturtle()
+
+        # Update status
+        status.num_disc = num_disc
+        status.total_step = (2 ** num_disc) - 1
+        status.remaining = status.total_step
+
+        # --- Autoplay ---
+        autoplay = Autoplay(len(disc_list), s, rods, rod_positions, status)
+
+        # Show level text
+        t.clear()
+        t.color("yellow")
+        t.write(f"Level: {level}", align="center", font=("Arial", 15, "bold"))
+
+        s.update()
+        s.listen()
+        s.onkey(key="h", fun=hint)
+        s.onkey(key="r", fun=replay_game)
 
     def get_disk_size(disk):
         return disk.shapesize()[1]
@@ -126,7 +158,7 @@ def start_game(player_name, score):
                         t.color("yellow")
                         t.write("🎉 You Win! Level Cleared!", align="center", font=("Arial", 15, "bold"))
                         update_score_in_db(player_name)
-                        s.ontimer(s.bye, 2000)
+                        s.ontimer(next_level, 2000)
 
                     else:
                         reset_game()
@@ -138,11 +170,11 @@ def start_game(player_name, score):
             conn = mysql.connector.connect(
                 host="127.0.0.1",
                 user="root",
-                password="Tanay@Rai1",
-                database="TowerOfHanoi"
+                password="tanviraut13",
+                database="towerOfHANOI"
             )
             cursor = conn.cursor()
-            cursor.execute("UPDATE leaderboard SET Score = Score + 1 WHERE PlayerName = %s", (pname,))
+            cursor.execute("UPDATE leaderboard SET Score = Score + 1 WHERE PlayerName = %s", (pname,score))
             conn.commit()
             cursor.close()
             conn.close()
