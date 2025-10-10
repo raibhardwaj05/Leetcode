@@ -1,11 +1,9 @@
-import turtle
 from turtle import Screen, Turtle
 from Disk import Disc
 from Rods import Rod
 from Autoplay import Autoplay
 from Status import Status
 import mysql.connector
-
 
 def start_game(player_name, score):
     # --- Screen Setup ---
@@ -20,7 +18,7 @@ def start_game(player_name, score):
     R.create()
     R.label()
 
-    disc = Disc(R, s)
+    disc = Disc(R, s, 0)
     disc.create_disc()
     status = Status()
 
@@ -51,10 +49,12 @@ def start_game(player_name, score):
     def replay_game():
         for rod_stack in rods.values():
             rod_stack.clear()
+
         for i, d in enumerate(disc_list):
             rods["src"].append(d)
             d.goto(rod_positions["src"], -185 + i * disc_height)
             d.fillcolor(d.og_color)
+
         t.clear()
         t.color("yellow")
         t.write(f"Level: {level}", align="center", font=("Arial", 15, "bold"))
@@ -64,10 +64,12 @@ def start_game(player_name, score):
     def reset_game():
         for rod_stack in rods.values():
             rod_stack.clear()
+
         for i, d in enumerate(disc_list):
             rods["src"].append(d)
             d.goto(rod_positions["src"], -185 + i * disc_height)
             d.fillcolor(d.og_color)
+
         t.clear()
         t.color("red")
         t.write("You Lose: Solution", align="center", font=("Arial", 15, "bold"))
@@ -78,23 +80,49 @@ def start_game(player_name, score):
     def hint():
         reset_game()
 
+    def quit_game():
+        s.bye()
+
+    # --- Database Update ---
+    def update_score_in_db(pname):
+        try:
+            conn = mysql.connector.connect(
+                host="127.0.0.1",
+                user="root",
+                password="Tanay@Rai1",
+                database="TowerOfHanoi"
+            )
+            cursor = conn.cursor()
+            cursor.execute("UPDATE leaderboard SET Score = Score + 1 WHERE PlayerName = %s", (pname,))
+            conn.commit()
+            cursor.execute("SELECT Score FROM Leaderboard where PlayerName = %s", (pname,))
+            new_score = cursor.fetchone()[0]
+            cursor.close()
+            conn.close()
+            print(f"✅ Score updated for {pname}")
+            return new_score
+
+        except Exception as e:
+            print(f"❌ Error updating score: {e}")
+            return 0
+
     # --- Next Level ---
-    def next_level():
+    def next_level(current_score):
         nonlocal level, num_disc, disc, disc_list, rods, autoplay
 
         level += 1
         num_disc += 1
 
         # Hide old discs
-        for d in disc_list:
-            d.hideturtle()
+        for d1 in disc_list:
+            d1.hideturtle()
 
         # Clear rods without replacing the dict
         for rod_stack in rods.values():
             rod_stack.clear()
 
         # Recreate discs
-        disc = Disc(R, s)
+        disc = Disc(R, s, current_score)
         disc.discs = num_disc
         disc.create_disc()
         disc_list = disc.disc_list
@@ -125,32 +153,16 @@ def start_game(player_name, score):
         s.listen()
         s.onkey(key="h", fun=hint)
         s.onkey(key="r", fun=replay_game)
+        s.onkey(key="q", fun=quit_game)
 
     def get_disk_size(disk):
         return disk.shapesize()[1]
 
     selected_rod = None
 
-    # --- Database Update ---
-    def update_score_in_db(pname):
-        try:
-            conn = mysql.connector.connect(
-                host="127.0.0.1",
-                user="root",
-                password="tanviraut13",
-                database="towerOfHANOI"
-            )
-            cursor = conn.cursor()
-            cursor.execute("UPDATE leaderboard SET Score = Score + 1 WHERE PlayerName = %s", (pname,))
-            conn.commit()
-            cursor.close()
-            conn.close()
-            print(f"✅ Score updated for {pname}")
-        except Exception as e:
-            print(f"❌ Error updating score: {e}")
-
     def handle_click(x, y):
         nonlocal selected_rod
+
         clicked_rod = None
         for rod, xpos in rod_positions.items():
             if xpos - 80 < x < xpos + 80:
@@ -178,8 +190,8 @@ def start_game(player_name, score):
                         t.clear()
                         t.color("yellow")
                         t.write("🎉 You Win! Level Cleared!", align="center", font=("Arial", 15, "bold"))
-                        update_score_in_db(player_name)
-                        s.ontimer(next_level, 2000)
+                        scr = update_score_in_db(player_name)
+                        s.ontimer(lambda: next_level(scr), 2000)
 
                     else:
                         reset_game()
@@ -190,6 +202,7 @@ def start_game(player_name, score):
     s.listen()
     s.onkey(key="h", fun=hint)
     s.onkey(key="r", fun=replay_game)
+    s.onkey(key="q", fun=quit_game)
     s.onscreenclick(handle_click)
     s.update()
     s.mainloop()

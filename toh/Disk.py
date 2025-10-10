@@ -6,12 +6,12 @@ class Disc:
     discs = 0
 
     # create Disc object with the rod and main screen parameters
-    def __init__(self, rod, screen):
+    def __init__(self, rod, screen, num_disc):
         self.s = screen
         self.R = rod
         # get the number of disc to solve
-        self.level = self.s.textinput("Tower of Hanoi", "Enter Level")
-        Disc.discs = int(self.level) + 1
+        # self.level = self.s.textinput("Tower of Hanoi", "Enter Level")
+        Disc.discs = num_disc + 1
         self.disc_height = 20
         self.disc_list = [] # List of discs
 

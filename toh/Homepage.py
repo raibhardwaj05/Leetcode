@@ -1,17 +1,9 @@
+from logging import exception
 from tkinter import *
 from tkinter import ttk, messagebox
 import mysql.connector
 import threading
 import Tower_Of_Hanoi  # This file contains your turtle game
-
-# ---------------- Database ----------------
-conn = mysql.connector.connect(
-    host="127.0.0.1",
-    user="root",
-    password="tanviraut13",
-    database="towerOfHANOI"
-)
-cursor = conn.cursor()
 
 # ---------------- Tkinter ----------------
 r = Tk()
@@ -61,34 +53,69 @@ entry.grid(row=0, column=1, padx=5)
 
 # ---------------- Functions ----------------
 def update_leaderboard(highlight_name=None):
-    for row in tree.get_children():
-        tree.delete(row)
-    cursor.execute("SELECT PlayerName, Score FROM leaderboard ORDER BY Score DESC")
-    results = cursor.fetchall()
-    for rank, (pname, score) in enumerate(results, start=1):
-        tree.insert("", "end", values=(rank, pname, score))
-    if highlight_name:
-        for item in tree.get_children():
-            if tree.item(item, "values")[1] == highlight_name:
-                tree.selection_set(item)
-                tree.see(item)
-                break
+
+    try:
+        # ---------------- Database ----------------
+        conn = mysql.connector.connect(
+            host="127.0.0.1",
+            user="root",
+            password="Tanay@Rai1",
+            database="TowerOfHanoi"
+        )
+        cursor = conn.cursor()
+
+        for row in tree.get_children():
+            tree.delete(row)
+
+        cursor.execute("SELECT PlayerName, Score FROM leaderboard ORDER BY Score DESC")
+        results = cursor.fetchall()
+
+        for rank, (pname, score) in enumerate(results, start=1):
+            tree.insert("", "end", values=(rank, pname, score))
+
+        if highlight_name:
+            for item in tree.get_children():
+                if tree.item(item, "values")[1] == highlight_name:
+                    tree.selection_set(item)
+                    tree.see(item)
+                    break
+
+        cursor.close()
+        conn.close()
+
+    except Exception as e:
+        print(f"Error updating leaderboard: {e}")
+
+
+def refresh_leaderboard():
+    update_leaderboard()
+    r.after(2000, refresh_leaderboard)
 
 def start_game_func():
+    """Handle Start Game button."""
     pname = entry.get().strip()
     if not pname:
         messagebox.showwarning("Input Error", "Please enter a name.")
         return
 
+    # Create a new database connection for this function
+    conn = mysql.connector.connect(
+        host="127.0.0.1",
+        user="root",
+        password="Tanay@Rai1",
+        database="TowerOfHanoi"
+    )
+    cursor = conn.cursor()
+
     if player.get() == "new":
         cursor.execute("SELECT PlayerName FROM leaderboard WHERE PlayerName=%s", (pname,))
         if cursor.fetchone():
             messagebox.showinfo("Duplicate Entry", "Player already exists. Select existing player.")
-            return
-        cursor.execute("INSERT INTO leaderboard (PlayerName, Score) VALUES (%s, %s)", (pname, 0))
-        conn.commit()
-        update_leaderboard(highlight_name=pname)
-        messagebox.showinfo("Success", f"New player '{pname}' added. Select existing to play.")
+        else:
+            cursor.execute("INSERT INTO leaderboard (PlayerName, Score) VALUES (%s, %s)", (pname, 0))
+            conn.commit()
+            update_leaderboard(highlight_name=pname)
+            messagebox.showinfo("Success", f"New player '{pname}' added. Select existing to play.")
 
     elif player.get() == "exist":
         cursor.execute("SELECT Score FROM leaderboard WHERE PlayerName=%s", (pname,))
@@ -98,14 +125,17 @@ def start_game_func():
             entry.delete(0, END)
             score = result[0]
 
+            # Run game in a thread to avoid freezing Tkinter
             def run_game_and_refresh():
                 Tower_Of_Hanoi.start_game(pname, score)
-                # Refresh leaderboard after game ends
                 update_leaderboard(highlight_name=pname)
 
-            threading.Thread(target=run_game_and_refresh).start()
+            threading.Thread(target=run_game_and_refresh, daemon=True).start()
         else:
             messagebox.showerror("No Results", f"No player named '{pname}' found.")
+
+    cursor.close()
+    conn.close()
 
 # Buttons
 Button(window, text="Start Game", font=("Arial", 14, "bold"), bg="gold", fg="darkblue", command=start_game_func).pack(pady=15)
@@ -113,4 +143,5 @@ Button(window, text="Quit Game", font=("Arial", 14, "bold"), bg="gold", fg="dark
 
 # Initial leaderboard
 update_leaderboard()
+refresh_leaderboard()
 r.mainloop()

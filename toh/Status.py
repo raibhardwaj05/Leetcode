@@ -30,6 +30,13 @@ class Status:
         self.replay.goto(430, 230)
         self.replay.write("Replay: R", align=Align, font=Font2)
 
+        self.quit = Turtle()
+        self.quit.color("cyan")
+        self.quit.hideturtle()
+        self.quit.penup()
+        self.quit.goto(430, 200)
+        self.quit.write("Quit: Q", align=Align, font=Font2)
+
     def update_status(self):
         self.steps.clear()
         self.steps.write(f"Steps: {self.remaining}", align= Align, font= Font2)
