@@ -125,12 +125,17 @@ def start_game_func():
             entry.delete(0, END)
             score = result[0]
 
-            # Run game in a thread to avoid freezing Tkinter
             def run_game_and_refresh():
-                Tower_Of_Hanoi.start_game(pname, score)
-                update_leaderboard(highlight_name=pname)
+                try:
+                    Tower_Of_Hanoi.start_game(pname, score)
+                    update_leaderboard(highlight_name=pname)
+                except Exception as e:
+                    import traceback
+                    print("Error in game:", e)
+                    traceback.print_exc()
 
-            threading.Thread(target=run_game_and_refresh, daemon=True).start()
+            # Run safely in main thread
+            r.after(200, run_game_and_refresh)
         else:
             messagebox.showerror("No Results", f"No player named '{pname}' found.")
 

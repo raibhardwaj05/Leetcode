@@ -4,8 +4,17 @@ from Rods import Rod
 from Autoplay import Autoplay
 from Status import Status
 import mysql.connector
+import turtle
 
 def start_game(player_name, score):
+    # ✅ Clean up any previous turtle window before creating a new one
+    try:
+        turtle.bye()
+    except:
+        pass
+    turtle.TurtleScreen._RUNNING = True  # Reset internal flag so new Screen() works
+
+
     # --- Screen Setup ---
     s = Screen()
     s.setup(1000, 600)
@@ -81,7 +90,8 @@ def start_game(player_name, score):
         reset_game()
 
     def quit_game():
-        s.bye()
+        s.bye()  # ✅ correctly closes the turtle window
+        turtle.TurtleScreen._RUNNING = True  # ✅ allow a new one later
 
     # --- Database Update ---
     def update_score_in_db(pname):
@@ -206,3 +216,5 @@ def start_game(player_name, score):
     s.onscreenclick(handle_click)
     s.update()
     s.mainloop()
+
+# start_game("bhardwaj", 1)
